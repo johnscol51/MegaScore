@@ -145,7 +145,7 @@ class MegaScoreApp(tk.Tk):
             "dataDir",
             "populateComp",
             "readme",
-            "backup"
+            "readDebug"
         ]
         self.build_button_list(self.admin_tab, options)
 

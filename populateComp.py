@@ -1,9 +1,11 @@
+# populateComp.py
+# GUI to edit/save competition details in CompDetails.csv
+
 import os
 import csv
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import ttk , filedialog
 from utils import log
-
 
 def run(DataDir):
     if not DataDir:
@@ -14,21 +16,22 @@ def run(DataDir):
     comp_file = os.path.join(DataDir, "CompDetails.csv")
 
     # ---------------------------------------------------------
-    # Load existing values if file exists
+    # Default values (with requested defaults for scores)
     # ---------------------------------------------------------
     defaults = {
         "name": "",
-        "date": "",
-        "HG-score": "",
-        "TP-score": "",
-        "photo-Score": "",
-        "time-Score": "",
+        "date": "summer 2026?",
+        "HG-score": "100",
+        "TP-score": "50",
+        "photo-Score": "100",
+        "time-Score": "100",
         "igcFileLocation": "",
         "pilotFile": "",
         "tba1": "",
         "tba2": ""
     }
 
+    # Load existing values if file exists
     if os.path.isfile(comp_file):
         try:
             with open(comp_file, "r", encoding="utf-8") as f:
@@ -46,24 +49,22 @@ def run(DataDir):
     # ---------------------------------------------------------
     # GUI dialog
     # ---------------------------------------------------------
-    parent = tk._default_root
-    dlg = tk.Toplevel(parent)
+    dlg = tk.Toplevel()
     dlg.title("Competition Details")
-
-    dlg.transient(parent)
+    dlg.geometry("800x420")  # Wider and tall enough for all fields
+    dlg.transient(tk._default_root)
     dlg.grab_set()
     dlg.focus_set()
 
     entries = {}
-
-    frame = ttk.Frame(dlg, padding=10)
-    frame.grid(row=0, column=0)
+    frame = tk.Frame(dlg, padx=20, pady=20)
+    frame.pack(fill="both", expand=True)
 
     # Helper to add a labeled entry
     def add_field(label, key, row):
-        ttk.Label(frame, text=label).grid(row=row, column=0, sticky="w", pady=3)
+        tk.Label(frame, text=label).grid(row=row, column=0, sticky="e", pady=5, padx=(0, 10))
         var = tk.StringVar(value=defaults[key])
-        ent = ttk.Entry(frame, textvariable=var, width=50)
+        ent = tk.Entry(frame, textvariable=var, width=60)
         ent.grid(row=row, column=1, sticky="w")
         entries[key] = var
 
@@ -75,11 +76,8 @@ def run(DataDir):
     add_field("Photo Score:", "photo-Score", 4)
     add_field("Time Score:", "time-Score", 5)
 
-    # ---------------------------------------------------------
-    # igcFileLocation (folder picker)
-    # ---------------------------------------------------------
-    ttk.Label(frame, text="IGC File Location:").grid(row=6, column=0, sticky="w", pady=3)
-
+    # IGC File Location (folder picker)
+    tk.Label(frame, text="IGC File Location:").grid(row=6, column=0, sticky="e", pady=5, padx=(0, 10))
     igc_var = tk.StringVar(value=defaults["igcFileLocation"])
     entries["igcFileLocation"] = igc_var
 
@@ -90,19 +88,14 @@ def run(DataDir):
         )
         if folder:
             igc_var.set(folder)
-        dlg.after(50, dlg.focus_force)
 
-    folder_frame = ttk.Frame(frame)
+    folder_frame = tk.Frame(frame)
     folder_frame.grid(row=6, column=1, sticky="w")
+    tk.Entry(folder_frame, textvariable=igc_var, width=60).pack(side="left", padx=(0, 5))
+    tk.Button(folder_frame, text="Browse", command=choose_folder).pack(side="left")
 
-    ttk.Entry(folder_frame, textvariable=igc_var, width=50).pack(side="left")
-    ttk.Button(folder_frame, text="Browse", command=choose_folder).pack(side="left", padx=5)
-
-    # ---------------------------------------------------------
-    # pilotFile (CSV file picker)
-    # ---------------------------------------------------------
-    ttk.Label(frame, text="Pilot File (CSV):").grid(row=7, column=0, sticky="w", pady=3)
-
+    # Pilot File (CSV picker)
+    tk.Label(frame, text="Pilot File (CSV):").grid(row=7, column=0, sticky="e", pady=5, padx=(0, 10))
     pilot_var = tk.StringVar(value=defaults["pilotFile"])
     entries["pilotFile"] = pilot_var
 
@@ -114,62 +107,52 @@ def run(DataDir):
         )
         if f:
             pilot_var.set(f)
-        dlg.after(50, dlg.focus_force)
 
-    pilot_frame = ttk.Frame(frame)
+    pilot_frame = tk.Frame(frame)
     pilot_frame.grid(row=7, column=1, sticky="w")
-
-    ttk.Entry(pilot_frame, textvariable=pilot_var, width=50).pack(side="left")
-    ttk.Button(pilot_frame, text="Browse", command=choose_pilot_file).pack(side="left", padx=5)
+    tk.Entry(pilot_frame, textvariable=pilot_var, width=60).pack(side="left", padx=(0, 5))
+    tk.Button(pilot_frame, text="Browse", command=choose_pilot_file).pack(side="left")
 
     # Extra fields
     add_field("TBA1:", "tba1", 8)
     add_field("TBA2:", "tba2", 9)
 
-    # ---------------------------------------------------------
-    # OK / Cancel
-    # ---------------------------------------------------------
-    result = {"value": None}
+    # OK / Cancel buttons
+    btn_frame = tk.Frame(frame)
+    btn_frame.grid(row=10, column=0, columnspan=2, pady=20, sticky="ew")
 
-    def confirm():
-        result["value"] = "OK"
-        dlg.destroy()
+    # Blue OK button style
+    style = ttk.Style()
+    style.configure("Blue.TButton", background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"))
 
-    def cancel():
-        result["value"] = "populateComp cancelled by user"
-        dlg.destroy()
+    ttk.Button(btn_frame, text="OK", width=10, command=lambda: dlg.destroy(),
+               style="Blue.TButton").pack(side="left", padx=10)
 
-    dlg.protocol("WM_DELETE_WINDOW", cancel)
+    ttk.Button(btn_frame, text="Close", width=10, command=dlg.destroy).pack(side="left", padx=10)
 
-    btn_frame = ttk.Frame(frame)
-    btn_frame.grid(row=10, column=0, columnspan=2, pady=10)
-
-    ttk.Button(btn_frame, text="OK", width=10, command=confirm).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text="Cancel", width=10, command=cancel).pack(side="left", padx=5)
-
-    parent.wait_window(dlg)
+    # Wait for dialog to close
+    dlg.wait_window(dlg)
 
     # ---------------------------------------------------------
-    # Handle result
+    # Save if OK was pressed (dlg.destroy() called from OK)
     # ---------------------------------------------------------
-    if result["value"] != "OK":
-        log(result["value"])
-        return result["value"]
-
-    # ---------------------------------------------------------
-    # Write updated CSV
-    # ---------------------------------------------------------
-    try:
-        with open(comp_file, "w", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            for key in defaults.keys():
-                writer.writerow([key, entries[key].get()])
-    except Exception as e:
-        msg = f"populateComp: Error writing CompDetails.csv: {e}"
+    if dlg.winfo_exists() == 0:  # Dialog closed via OK or Cancel
+        # Check if OK was pressed (simple way: check if entries still exist)
+        try:
+            entries["name"].get()  # If dialog closed via Cancel, this will error
+            # Save
+            with open(comp_file, "w", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                for key in defaults:
+                    writer.writerow([key, entries[key].get()])
+            msg = "populateComp: Competition details saved"
+            log(msg)
+            return msg
+        except:
+            msg = "populateComp cancelled by user"
+            log(msg)
+            return msg
+    else:
+        msg = "populateComp cancelled by user"
         log(msg)
         return msg
-
-    msg = "populateComp: Competition details saved"
-    log(msg)
-    return msg
-

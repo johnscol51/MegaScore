@@ -1,9 +1,13 @@
+#importFromCSV.py
+# Imports task points from CSV into TaskPoints.csv
+# Input format: old_task,name,lat,lon[,dist[,pt]]
+# Output: new_task,name,lat,lon,dist,pt  (old_task is ignored)
+
 import os
 import csv
 import tkinter as tk
 from tkinter import filedialog, ttk
 from utils import log
-
 
 def run(DataDir):
     if not DataDir:
@@ -23,18 +27,25 @@ def run(DataDir):
     parent = tk._default_root
     dlg = tk.Toplevel(parent)
     dlg.title("Import from CSV")
-
+    dlg.geometry("900x350")          # Your preferred size
     dlg.transient(parent)
     dlg.grab_set()
     dlg.focus_set()
 
+    # Make column 0 (main) expand horizontally, column 1 (Advanced) fixed width
+    dlg.grid_columnconfigure(0, weight=1)
+    dlg.grid_columnconfigure(1, weight=0)
+    dlg.grid_rowconfigure(0, weight=1)
+
     selected_file = tk.StringVar()
     import_task_num = tk.IntVar(value=1)
+    debug_var = tk.StringVar(value="N")
 
-    frame = ttk.Frame(dlg, padding=10)
-    frame.grid(row=0, column=0)
+    # Main frame (left side) - now expands
+    frame = ttk.Frame(dlg, padding=15)
+    frame.grid(row=0, column=0, sticky="nsew", padx=15, pady=15)
 
-    ttk.Label(frame, text="Select CSV file:").grid(row=0, column=0, sticky="w")
+    ttk.Label(frame, text="Select CSV file:").grid(row=0, column=0, sticky="w", pady=8)
 
     def choose_file():
         f = filedialog.askopenfilename(
@@ -46,17 +57,29 @@ def run(DataDir):
             selected_file.set(f)
         dlg.after(50, dlg.focus_force)
 
-    ttk.Button(frame, text="Browse", command=choose_file).grid(row=0, column=1, padx=5)
-    ttk.Label(frame, textvariable=selected_file, width=65).grid(
-        row=1, column=0, columnspan=2, sticky="w"
+    ttk.Button(frame, text="Browse", command=choose_file).grid(row=0, column=1, padx=10, pady=8, sticky="w")
+
+    # File path label expands horizontally
+    ttk.Label(frame, textvariable=selected_file, width=80, wraplength=650).grid(
+        row=1, column=0, columnspan=2, sticky="ew", pady=10
     )
 
     ttk.Label(frame, text="Import INTO MegaScore as task number:").grid(
-        row=2, column=0, sticky="w", pady=(10, 0)
+        row=2, column=0, sticky="w", pady=(15, 8)
     )
     ttk.Combobox(
         frame, textvariable=import_task_num, values=list(range(1, 11)), width=5
-    ).grid(row=2, column=1, sticky="w")
+    ).grid(row=2, column=1, sticky="w", pady=8)
+
+    # Advanced section (right side) - fixed width, vertical fill
+    adv_frame = tk.LabelFrame(dlg, text="Advanced — do not change unless required", padx=15, pady=15)
+    adv_frame.grid(row=0, column=1, sticky="ns", padx=20, pady=20)
+
+    tk.Label(adv_frame, text="Debug mode:").pack(anchor="w", pady=8)
+    ttk.Combobox(
+        adv_frame, textvariable=debug_var,
+        values=["Y", "N"], width=5, state="readonly"
+    ).pack(anchor="w", pady=5)
 
     result = {"value": None}
 
@@ -74,11 +97,16 @@ def run(DataDir):
     dlg.protocol("WM_DELETE_WINDOW", cancel)
 
     btn_frame = ttk.Frame(frame)
-    btn_frame.grid(row=3, column=0, columnspan=2, pady=10)
+    btn_frame.grid(row=3, column=0, columnspan=2, pady=20, sticky="ew")
 
-    ttk.Button(btn_frame, text="OK", width=10, command=confirm).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text="Cancel", width=10, command=cancel).pack(side="left", padx=5)
+    # Blue OK button
+    style = ttk.Style()
+    style.configure("Blue.TButton", background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"))
 
+    ttk.Button(btn_frame, text="OK", width=10, command=confirm,
+               style="Blue.TButton").pack(side="left", padx=10)
+
+    ttk.Button(btn_frame, text="Close", width=10, command=cancel).pack(side="left", padx=10)
     parent.wait_window(dlg)
 
     if result["value"] != "OK":
@@ -87,8 +115,9 @@ def run(DataDir):
 
     csv_path = selected_file.get()
     import_task = import_task_num.get()
+    debug_mode = (debug_var.get().upper() == "Y")
 
-    log(f"importFromCSV: File selected = {csv_path}, Import as Task = {import_task}")
+    log(f"importFromCSV: File = {csv_path}, Import as Task = {import_task}, Debug = {debug_mode}")
 
     # ---------------------------------------------------------
     # Read CSV
@@ -97,25 +126,24 @@ def run(DataDir):
     try:
         with open(csv_path, "r", encoding="utf-8") as f:
             reader = csv.reader(f)
-            for line in reader:
-                if len(line) < 4:
+            for line_num, line in enumerate(reader, start=1):
+                if len(line) < 5:  # Minimum: old_task,name,lat,lon[,dist]
+                    if debug_mode:
+                        log(f"Debug: Skipping invalid row {line_num} (too few columns): {line}")
                     continue
 
-                # 4-column format: task,name,lat,lon
-                if len(line) == 4:
-                    _, name, lat, lon = line
-                    dist = "0"
-                    pt = "0"
+                # Strip whitespace from all fields
+                line = [x.strip() for x in line]
 
-                # 5-column format: task,name,lat,lon,dist
-                elif len(line) >= 5:
-                    _, name, lat, lon, dist = line[:5]
-                    pt = "0"
-                elif len(line) >= 6:
-                    _, name, lat, lon, dist, pt = line[:6]
-                else:
-                    continue
-                rows.append((name.strip(), lat.strip(), lon.strip(), dist.strip(), pt.strip()))
+                # Ignore first column (old task number)
+                # Take: name = line[1], lat = line[2], lon = line[3], dist = line[4] or "0", pt = line[5] or "0"
+                name = line[1]
+                lat = line[2]
+                lon = line[3]
+                dist = line[4] if len(line) > 4 else "0"
+                pt = line[5] if len(line) > 5 else "0"
+
+                rows.append((name, lat, lon, dist, pt))
 
     except Exception as e:
         msg = f"importFromCSV: Error reading CSV: {e}"
@@ -127,15 +155,20 @@ def run(DataDir):
         log(msg)
         return msg
 
+    # Debug logging
+    if debug_mode:
+        log(f"Debug: Parsed {len(rows)} rows from CSV:")
+        for name, lat, lon, dist, pt in rows:
+            log(f"  - {name}: {lat}, {lon} (dist={dist}, pt={pt})")
+
     # ---------------------------------------------------------
     # Append to TaskPoints.csv
     # ---------------------------------------------------------
     output_file = os.path.join(DataDir, "TaskPoints.csv")
     added = 0
-
     try:
         with open(output_file, "a", encoding="utf-8") as f:
-            for name, lat, lon, dist, pt  in rows:
+            for name, lat, lon, dist, pt in rows:
                 f.write(f"{import_task},{name},{lat},{lon},{dist},{pt}\n")
                 added += 1
     except Exception as e:
@@ -144,6 +177,8 @@ def run(DataDir):
         return msg
 
     msg = f"importFromCSV: Added {added} rows to TaskPoints.csv"
+    if debug_mode:
+        msg += f" (from {len(rows)} parsed rows)"
     log(msg)
-    return msg
 
+    return msg
