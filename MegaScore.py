@@ -169,6 +169,7 @@ class MegaScoreApp(tk.Tk):
         options = [
             "ScoreNavTask",
             "SpotLanding",
+            "scoreGaggle",
             "ScoreCircle",
             "NavKMLgen",
         ]
@@ -180,8 +181,8 @@ class MegaScoreApp(tk.Tk):
     def build_results_tab(self):
         options = [
             "NavResults",
-            "SpotResults",
-            "CircleResults",
+#            "SpotResults",
+#            "CircleResults",
             "OverallResults",
         ]
         self.build_button_list(self.results_tab, options)

@@ -133,6 +133,7 @@ def parse_igc(path, debug=False):
             if line[23] == "W":
                 lon = -lon
             alt = int(line[25:30])
+            alt = int(line[30:35])
             track.append((lat, lon, alt))
     if debug:
         print(f"Parsed {len(track)} B-records from IGC")

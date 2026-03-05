@@ -103,8 +103,9 @@ def run(DataDir):
     style = ttk.Style()
     style.configure("Blue.TButton", background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"))
 
-    ttk.Button(btn_frame, text="OK", width=10, command=confirm,
-               style="Blue.TButton").pack(side="left", padx=10)
+    #ttk.Button(btn_frame, text="OK", width=10, command=confirm,
+    #           style="Blue.TButton").pack(side="left", padx=10)
+    tk.Button(btn_frame, text="OK", width=10,  background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"),command=confirm).pack(side="left", padx=10)
 
     ttk.Button(btn_frame, text="Close", width=10, command=cancel).pack(side="left", padx=10)
     parent.wait_window(dlg)
@@ -155,11 +156,27 @@ def run(DataDir):
         log(msg)
         return msg
 
-    # Debug logging
+    # NEW: Filter out invalid point names (e.g. "01-fred")
+    valid_rows = []
+    skipped = []
+    valid_prefixes = {"SP", "FP", "TP", "HG", "PHOTO", "P"}
+    for name, lat, lon, dist, pt in rows:
+        upper = name.upper()
+        if any(upper.startswith(prefix) for prefix in valid_prefixes):
+            valid_rows.append((name, lat, lon, dist, pt))
+        else:
+            skipped.append(name)
+
+    if skipped and debug_mode:
+        log(f"Skipped {len(skipped)} invalid points: {', '.join(skipped)}")
+
+    rows = valid_rows  # Use only valid rows for output
+
+    # Debug logging (now only shows valid rows)
     if debug_mode:
-        log(f"Debug: Parsed {len(rows)} rows from CSV:")
+        log(f"Debug: Parsed and kept {len(rows)} valid rows from CSV:")
         for name, lat, lon, dist, pt in rows:
-            log(f"  - {name}: {lat}, {lon} (dist={dist}, pt={pt})")
+            log(f" - {name}: {lat}, {lon} (dist={dist}, pt={pt})")
 
     # ---------------------------------------------------------
     # Append to TaskPoints.csv

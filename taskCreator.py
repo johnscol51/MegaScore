@@ -27,26 +27,35 @@ class MapPointEditorApp(tk.Toplevel):
         # ------------------- Top bar -------------------
         top = tk.Frame(self)
         top.pack(fill="x", padx=10, pady=5)
-        top.grid_columnconfigure(3, weight=1)  # Expand space between DataDir and Task No
+        top.grid_columnconfigure(3, weight=1)  # Expand space between DataDir and controls
 
         # Left side: Select DataDir button + label
         tk.Button(top, text="Select DataDir", command=self._choose_data_dir).grid(row=0, column=0, padx=10, sticky="w")
         self.data_dir_label = tk.Label(top, text="No DataDir selected", fg="gray")
         self.data_dir_label.grid(row=0, column=1, sticky="w", padx=5)
 
-        # Right side: Task No label + entry (grouped, right-aligned, close together)
-        task_frame = tk.Frame(top)
-        task_frame.grid(row=0, column=4, sticky="e", padx=(20, 5))
+        # Right side: Task No + Load source selector
+        right_controls = tk.Frame(top)
+        right_controls.grid(row=0, column=4, sticky="e", padx=(20, 5))
 
-        tk.Label(task_frame, text="Task No:").pack(side="left")
+        tk.Label(right_controls, text="Task No:").pack(side="left")
         self.task_no_var = tk.StringVar()
-        tk.Entry(task_frame, textvariable=self.task_no_var, width=8).pack(side="left", padx=(2, 0))
+        tk.Entry(right_controls, textvariable=self.task_no_var, width=8).pack(side="left", padx=(2, 10))
+
+        # NEW: Load source selector
+        self.load_source_var = tk.StringVar(value="imports")
+        tk.Label(right_controls, text="Load from:").pack(side="left", padx=(10, 5))
+        tk.Radiobutton(right_controls, text="Imports (new)", variable=self.load_source_var,
+                       value="imports").pack(side="left")
+        tk.Radiobutton(right_controls, text="Master file", variable=self.load_source_var,
+                       value="master").pack(side="left")
 
         # Branding (far right)
         brand = tk.Frame(top)
         brand.grid(row=0, column=5, sticky="e", padx=10)
         tk.Label(brand, text=" ", bg="blue", width=4, height=2).pack(side="left", padx=3)
         tk.Label(brand, text=" ", bg="yellow", width=4, height=2).pack(side="left", padx=3)
+
         # ------------------- Main area -------------------
         main = tk.Frame(self)
         main.pack(fill="both", expand=True)
@@ -131,16 +140,23 @@ class MapPointEditorApp(tk.Toplevel):
             messagebox.showerror("Error", "Select DataDir and enter numeric Task No.")
             return
 
-        # Use imports subfolder
-        imports_dir = os.path.join(self.data_dir, "imports")
-        os.makedirs(imports_dir, exist_ok=True)  # Create if missing
-
         task_no = self.task_no_var.get().strip()
-        # Use the same function as before, but point it to the dataDir/imports subfolder
-        rows = file_io.load_taskpoints(imports_dir, task_no)
+        source = self.load_source_var.get()
+
+        if source == "imports":
+            # Load from imports subfolder (existing behavior)
+            imports_dir = os.path.join(self.data_dir, "imports")
+            os.makedirs(imports_dir, exist_ok=True)
+            rows = file_io.load_taskpoints(imports_dir, task_no)
+            source_desc = "imports"
+        else:
+            # Load from master TaskPoints.csv using new file_io method
+            master_path = os.path.join(self.data_dir, "TaskPoints.csv")
+            rows = file_io.load_taskpoints_from_master(master_path, task_no)
+            source_desc = "master file"
 
         if not rows:
-            messagebox.showinfo("Not found", f"No CSV for task {task_no} in imports.")
+            messagebox.showinfo("Not found", f"No points for task {task_no} in {source_desc}.")
             return
 
         self.manager.clear_all()
@@ -148,7 +164,7 @@ class MapPointEditorApp(tk.Toplevel):
             self.manager.add_loaded_point(i, row["name"], row["lat"], row["lon"], row["dist"], row["pt"])
         self.list_panel.refresh()
         self.editor_panel.clear()
-        self._set_status(f"Loaded {len(rows)} points")
+        self._set_status(f"Loaded {len(rows)} points from {source_desc}")
 
     def _save_csv(self):
         if not self.data_dir or not self.task_no_var.get().strip().isdigit():
@@ -186,30 +202,34 @@ class MapPointEditorApp(tk.Toplevel):
         text.config(yscrollcommand=scrollbar.set)
 
         readme_content = """
-MegaScore Map Point Editor - Quick Help
+MegaScore Map - goblin Point Editor - Quick Help
 Overview
 This tool lets you create, edit and manage task points on an OpenStreetMap background.
-Points are saved as TaskPoints<taskno>.csv files in DataDir/imports.
+Points are saved as TaskPoints<taskno>.csv files in DataDir/imports for later importing.
 Basic usage:
 • Insert mode: click on map to add a point (SP first, then TP1, TP2...)
-• Move mode: select point in list, then click new location on map
-• Edit: select point → change name/lat/lon/dist/PT in editor → Apply
-• Delete: select point → Delete selected button
+• Move mode: select point from the list on the right, then click new location on map
+• Edit: Point Editor → change name/lat/lon/dist/PT in editor → Apply
+• Delete: select a point → Delete selected button
 Loading / Saving:
 • Set Task No in top bar
-• Load: reads existing TaskPoints<taskno>.csv from imports if present
+• Load: Imports(new) reads existing TaskPoints<taskno>.csv from imports if present
+•       Master file  reads  from the main master  TaskPoints.csv in you dataDir if present. 
 • Save CSV: writes current points to TaskPoints<taskno>.csv in imports
+•           there is currently no save function back to the master file, you need go via a new import 
 • Once you have saved your CSV in dataDir/imports you need to use importFromCSV to load to the main app
 Point types (by name):
 • SP / TP* / FP → standard turnpoints (blue 500m circle)
 • *HG* → hidden gates 
-• *photo-* → photo points 
+• *photo* → photo points 
 • you need to ensure that you have TP2 before you create TP3. it only matters when you save the file 
 
 Dist and PT:
 • Dist  is the track distance to the point from SP (optional) 
 • PT  is the time allowance in integer minutes for a preicion turn (optional) 
 • Close this window with the X or the Close button below
+
+the goblin lives in the hope that you find this useful.
         """
         text.insert("1.0", readme_content)
         text.config(state="disabled")

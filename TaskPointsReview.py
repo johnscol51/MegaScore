@@ -379,7 +379,7 @@ def run(DataDir):
             append_line(f" Totals: TP/SP/FP = {len(tp_list)+len(sp_list)+len(fp_list)}, HG = {len(hg_list)}, PHOTO = {len(photo_list)}")
 
             # Task type classification
-            if len(sp_list) >= 1 and len(tp_list) >= 1 and len(fp_list) == 0 and len(hg_list) == 0:
+            if len(sp_list) >= 1 and len(tp_list) >= 2 and len(fp_list) == 0 and len(hg_list) == 0:
                 append_line(" Task type: Turn Point Hunt (SP + TPs, no HGs)")
             elif len(sp_list) == 1 and len(tp_list) == 1 and len(fp_list) == 0:
                 append_line(" Task type: Circle Task (SP + single TP used as CM)")

@@ -103,8 +103,9 @@ def run(DataDir):
     style = ttk.Style()
     style.configure("Blue.TButton", background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"))
 
-    ttk.Button(btn_frame, text="OK", width=10, command=confirm,
-               style="Blue.TButton").pack(side="left", padx=10)
+    tk.Button(btn_frame, text="OK", width=10,  background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"),command=confirm).pack(side="left", padx=10)
+  #  ttk.Button(btn_frame, text="OK", width=10, command=confirm,
+  #             style="Blue.TButton").pack(side="left", padx=10)
 
     ttk.Button(btn_frame, text="Close", width=10, command=cancel).pack(side="left", padx=10)
 

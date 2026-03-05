@@ -8,6 +8,16 @@ from tkinter import filedialog, ttk
 from xml.etree import ElementTree as ET
 from utils import log
 
+# Hardcoded list of placemark names to exclude from import
+# Add any unwanted names here (case-insensitive match)
+EXCLUDE_PLACEMARK_NAMES = {
+    "Track line",
+    "test",
+    "junk",
+    "ignore",
+    "dummy",
+}
+
 def run(DataDir):
     if not DataDir:
         msg = "importFromKML aborted: DataDir not set"
@@ -98,10 +108,7 @@ def run(DataDir):
     btn_frame.grid(row=3, column=0, columnspan=2, pady=20, sticky="ew")
     
     # OK button blue
-    style = ttk.Style()
-    style.configure("Blue.TButton", background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"))
-    ttk.Button(btn_frame, text="OK", width=10, command=confirm,
-               style="Blue.TButton").pack(side="left", padx=10)
+    tk.Button(btn_frame, text="OK", width=10,  background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"),command=confirm).pack(side="left", padx=10)
     
     ttk.Button(btn_frame, text="close", width=10, command=cancel).pack(side="left", padx=10)
 
@@ -138,20 +145,32 @@ def run(DataDir):
 
     rows = []
     imported_names = []  # for debug
+    skipped_names = []   # NEW: track skipped for debug
 
     for pm in placemarks:
         name_el = pm.find("kml:name", ns)
         coord_el = pm.find(".//kml:coordinates", ns)
         if name_el is None or coord_el is None:
             continue
+
         name = name_el.text.strip()
+        # NEW: Skip if name is in exclude list (case-insensitive)
+        if name.upper() in {n.upper() for n in EXCLUDE_PLACEMARK_NAMES}:
+            skipped_names.append(name)
+            continue
+
         coords = coord_el.text.strip().split(",")
         if len(coords) < 2:
             continue
+
         lon = coords[0].strip()
         lat = coords[1].strip()
         rows.append((name, lat, lon, "0", "0"))
         imported_names.append(name)
+
+    # NEW: Log skipped placemarks when debug is on
+    if debug_mode and skipped_names:
+        log(f"Skipped {len(skipped_names)} excluded placemarks: {', '.join(skipped_names)}")
 
     if not rows:
         msg = "importFromKML: No valid coordinates found"

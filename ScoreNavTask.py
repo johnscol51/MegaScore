@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#ScoreNavTask.py
 import tkinter as tk
 from tkinter import ttk, messagebox
 import os
@@ -11,6 +12,8 @@ import re
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from time_scoring import compute_timing_scores
+from utils import log
+
 
 
 def app_dir():
@@ -298,6 +301,8 @@ def run(DataDir):
 
         status_text.config(state="disabled")
 
+        log(msg)
+
     # GUI Layout
     tk.Label(root, text=comp_name, font=("Arial", 14, "bold")).pack(pady=10)
 
@@ -504,27 +509,21 @@ def run(DataDir):
                 messagebox.showerror("Error", "Please select a Task No.")
                 root.grab_set()
                 return
-
             if not pilot_var.get():
                 messagebox.showerror("Error", "Please select an IGC file.")
                 root.grab_set()
                 return
-
             selected = pilot_var.get()
             base_name = selected
-
             m = igc_regex.match(base_name + ".igc")
             if not m:
                 messagebox.showerror("Error", f"Filename format not recognised:\n{selected}")
                 root.grab_set()
                 return
-
             pilotNo = m.group(1)
             taskNo_file = m.group(2)
             taskNo_display = str(int(taskNo_file))
-
             igc_file = os.path.join(igc_dir, base_name + ".igc")
-
             if not os.path.exists(igc_file):
                 msg = (
                     "Selected IGC file does not exist.\n\n"
@@ -534,16 +533,38 @@ def run(DataDir):
                 messagebox.showerror("IGC File Not Found", msg)
                 root.grab_set()
                 return
-
             update_status(f"Processing {base_name}.igc (Pilot {pilotNo}, Task {taskNo_display})")
 
             # Load taskpoints (NEW MODEL)
             taskpoints = load_taskpoints_for_task(taskpoints_file, taskNo_display)
 
+            # NEW: Precise filter for valid gate/point names
+            # Matches: SP*, FP*, *TP*, *HG*, *PHOTO*, *photo*
+            filtered_points = []
+            skipped = []
+            for tp in taskpoints:
+                upper = tp.name.upper()
+                if (upper.startswith("SP") or
+                    upper.startswith("FP") or
+                    "TP" in upper or
+                    "HG" in upper or
+                    "PHOTO" in upper or
+                    "PHOTO" in upper):  # extra check for lowercase variants
+                    filtered_points.append(tp)
+                else:
+                    skipped.append(tp.name)
+
+            if skipped:
+                update_status(f"Skipped {len(skipped)} invalid points: {', '.join(skipped[:5])}{'...' if len(skipped) > 5 else ''}")
+            else:
+                update_status(f"All {len(taskpoints)} points are valid gates")
+
+            # Use only filtered points for scoring
+            taskpoints = filtered_points
+
             # Load IGC fixes
             fixes = load_igc_positions(igc_file)
-
-            update_status(f"Loaded {len(fixes)} fixes, {len(taskpoints)} task points")
+            update_status(f"Loaded {len(fixes)} fixes, {len(taskpoints)} valid task points")
 
             # Convert TaskPoint objects to dicts for existing scoring logic
             points_for_scoring = [
@@ -554,6 +575,7 @@ def run(DataDir):
             # Run zone scoring
             results = score_points(points_for_scoring, fixes, int(hg_var.get()), int(tp_var.get()))
             results = sort_points(results)
+
             # Extract actual SP time from zone scoring (for SP timing mode)
             sp_actual_time = None
             for r in results:
@@ -563,7 +585,6 @@ def run(DataDir):
 
             # Build a dict of hit status for timing
             hit_map = {r["name"]: (r["hit"] == "Y") for r in results}
-
 
             # -----------------------------------------------------
             # TIMING SCORING (NEW)
@@ -575,10 +596,9 @@ def run(DataDir):
                 max_score=int(time_var.get()),
                 taskpoints=taskpoints,
                 fixes=fixes,
-                hit_map=hit_map,   # NEW
-                sp_actual_time=sp_actual_time,   # NEW
+                hit_map=hit_map,
+                sp_actual_time=sp_actual_time,
             )
-
 
             # Inject timing scores into results
             for r in results:
@@ -615,12 +635,10 @@ def run(DataDir):
                 w = csv.writer(f)
                 w.writerow([base_name])
                 w.writerow(["name", "time", "expected_time", "dist_m", "hit", "score", "time_score"])
-
                 for row_res in results:
                     name = row_res["name"]
                     t = row_res["time"]
                     dist = f"{row_res['dist']:.0f}"
-
                     if "PHOTO" in name.upper():
                         w.writerow([name, t, "", dist, "", "", ""])
                     else:
@@ -633,7 +651,6 @@ def run(DataDir):
                             row_res["score"],
                             row_res["time_score"],
                         ])
-
                 w.writerow([])
                 w.writerow([
                     "SUMMARY",
@@ -645,8 +662,11 @@ def run(DataDir):
                     f"photo_total={photo_total}",
                 ])
 
-                run_timestamp = datetime.now().isoformat(timespec="seconds")
+                # NEW: Log the summary line to debug.log
+                summary_line = f"SUMMARY: SP={sp_time}, GS={ground_speed}, TP={tp_total}, HG={hg_total}, Time={time_total}, Photo={photo_total}"
+                log(summary_line)
 
+                run_timestamp = datetime.now().isoformat(timespec="seconds")
                 w.writerow([
                     "data",
                     run_timestamp,
@@ -670,12 +690,10 @@ def run(DataDir):
             # -----------------------------------------------------
             c = canvas.Canvas(pdf_path, pagesize=A4)
             width, height = A4
-
             y = height - 40
             c.setFont("Helvetica-Bold", 14)
-            c.drawString(40, y, f"{comp_name}   —   {base_name}")
+            c.drawString(40, y, f"{comp_name} — {base_name}")
             y -= 35
-
             c.setFont("Helvetica-Bold", 10)
             c.drawString(40, y, "Name")
             c.drawString(120, y, "Time")
@@ -686,30 +704,25 @@ def run(DataDir):
             c.drawString(420, y, "TimeScore")
             c.line(40, y - 3, 500, y - 3)
             y -= 15
-
             c.setFont("Helvetica", 9)
             row_step = 13
-            col_x = [40, 110, 190, 260, 320, 370, 410, 500]
 
+            col_x = [40, 110, 190, 260, 320, 370, 410, 500]
             for row_res in results:
                 name = row_res["name"]
                 t = row_res["time"]
                 dist = f"{row_res['dist']:.0f}"
-
                 if "PHOTO" in name.upper():
                     hit = score_val = time_score_val = ""
                 else:
                     hit = row_res["hit"]
                     score_val = str(row_res["score"])
                     time_score_val = str(row_res["time_score"])
-
                 c.setLineWidth(0.2)
                 c.setStrokeGray(0.85)
                 c.line(40, y - 2, 500, y - 2)
-
                 for x in col_x:
                     c.line(x, y + 10, x, y - 5)
-
                 c.drawString(40, y, name)
                 c.drawString(120, y, t)
                 c.drawString(200, y, row_res["expected_time"])
@@ -717,20 +730,23 @@ def run(DataDir):
                 c.drawString(340, y, hit)
                 c.drawString(380, y, score_val)
                 c.drawString(430, y, time_score_val)
-
                 y -= row_step
                 if y < 80:
                     break
-
             y -= 20
             c.setFont("Helvetica-Bold", 10)
             c.drawString(
                 40,
                 y,
-                f"SUMMARY: SP={sp_time}, GS={ground_speed},  "
+                f"SUMMARY: SP={sp_time}, GS={ground_speed}, "
                 f"TP={tp_total}, HG={hg_total}, Time={time_total}, Photo={photo_total}, "
                 f"Timing={timing_mode}",
             )
+
+            # Footer on plot page
+            footer_text = f"Generated: {datetime.now().isoformat(timespec='seconds')}   File: {os.path.basename(pdf_path)}"
+            c.setFont("Helvetica", 8)
+            c.drawString(40, 20, footer_text)
 
             if plotyn_var.get() == "Y":
                 c.showPage()
@@ -741,7 +757,6 @@ def run(DataDir):
                 except Exception:
                     pass
                 c.showPage()
-
             c.save()
 
             update_status("Scoring complete. CSV and PDF updated.")
@@ -753,7 +768,6 @@ def run(DataDir):
             messagebox.showerror("Unexpected Error", str(e))
             root.grab_set()
             update_status(f"Error: {e}")
-
     # -----------------------------------------------------
     # Buttons
     # -----------------------------------------------------

@@ -153,8 +153,9 @@ def run(DataDir):
               background=[("active", "#0055aa"), ("pressed", "#004488")])
 
     # OK left (blue), Cancel right
-    ttk.Button(btn_frame, text="OK", width=10,
-               command=lambda: confirm(), style="Blue.TButton").pack(side="left", padx=6)
+    tk.Button(btn_frame, text="OK", width=10,  background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"),command=lambda: confirm()).pack(side="left", padx=10)
+    #ttk.Button(btn_frame, text="OK", width=10,
+    #           command=lambda: confirm(), style="Blue.TButton").pack(side="left", padx=6)
     ttk.Button(btn_frame, text="Cancel", width=10,
                command=lambda: cancel()).pack(side="left", padx=6)
 

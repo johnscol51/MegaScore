@@ -51,7 +51,7 @@ def run(DataDir):
     # ---------------------------------------------------------
     dlg = tk.Toplevel()
     dlg.title("Competition Details")
-    dlg.geometry("800x420")  # Wider and tall enough for all fields
+    dlg.geometry("860x420")  # Wider and tall enough for all fields
     dlg.transient(tk._default_root)
     dlg.grab_set()
     dlg.focus_set()
@@ -91,7 +91,7 @@ def run(DataDir):
 
     folder_frame = tk.Frame(frame)
     folder_frame.grid(row=6, column=1, sticky="w")
-    tk.Entry(folder_frame, textvariable=igc_var, width=60).pack(side="left", padx=(0, 5))
+    tk.Entry(folder_frame, textvariable=igc_var, width=75).pack(side="left", padx=(0, 5))
     tk.Button(folder_frame, text="Browse", command=choose_folder).pack(side="left")
 
     # Pilot File (CSV picker)
@@ -110,7 +110,7 @@ def run(DataDir):
 
     pilot_frame = tk.Frame(frame)
     pilot_frame.grid(row=7, column=1, sticky="w")
-    tk.Entry(pilot_frame, textvariable=pilot_var, width=60).pack(side="left", padx=(0, 5))
+    tk.Entry(pilot_frame, textvariable=pilot_var, width=75).pack(side="left", padx=(0, 5))
     tk.Button(pilot_frame, text="Browse", command=choose_pilot_file).pack(side="left")
 
     # Extra fields
@@ -125,8 +125,9 @@ def run(DataDir):
     style = ttk.Style()
     style.configure("Blue.TButton", background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"))
 
-    ttk.Button(btn_frame, text="OK", width=10, command=lambda: dlg.destroy(),
-               style="Blue.TButton").pack(side="left", padx=10)
+    tk.Button(btn_frame, text="OK", width=10,background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"), command=lambda: dlg.destroy()).pack(side="left", padx=10)
+#    ttk.Button(btn_frame, text="OK", width=10, command=lambda: dlg.destroy(),
+#               style="Blue.TButton").pack(side="left", padx=10)
 
     ttk.Button(btn_frame, text="Close", width=10, command=dlg.destroy).pack(side="left", padx=10)
 

@@ -150,4 +150,56 @@ def save_taskpoints(data_dir, task_no, rows):
     except Exception as e:
         messagebox.showerror("Error", f"Failed to save CSV:\n{e}")
         return False
+# ============================================================
+# Load from master TaskPoints.csv (filtered by task_no)
+# ============================================================
+def load_taskpoints_from_master(master_path, task_no):
+    """
+    Load points from the master TaskPoints.csv file, filtered to only include
+    rows where the first column (task number) matches the given task_no.
+    
+    Returns list of dicts in the same format as load_taskpoints():
+        { "name": ..., "lat": float, "lon": float, "dist": float, "pt": str }
+    
+    Returns None if file not found or error occurs.
+    """
+    if not os.path.exists(master_path):
+        return None
+    
+    rows = []
+    try:
+        with open(master_path, "r", newline="", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                # Skip empty/malformed rows
+                if len(row) < 6:
+                    continue
+                
+                # Check task number match (first column)
+                if row[0].strip() != str(task_no):
+                    continue
+                
+                # Parse fields
+                try:
+                    name = row[1].strip()
+                    lat = float(row[2])
+                    lon = float(row[3])
+                    dist = float(row[4]) if row[4].strip() else 0.0
+                    pt = row[5].strip() if row[5].strip() else "N"
+                    rows.append({
+                        "name": name,
+                        "lat": lat,
+                        "lon": lon,
+                        "dist": dist,
+                        "pt": pt,
+                    })
+                except (ValueError, IndexError):
+                    # Skip malformed rows silently
+                    continue
+        
+        return rows if rows else None
+    
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to load master TaskPoints.csv:\n{e}")
+        return None
 
