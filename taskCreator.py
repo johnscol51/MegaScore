@@ -68,7 +68,7 @@ class MapPointEditorApp(tk.Toplevel):
         self.mode_var = tk.StringVar(value="insert")
         mode_frame = tk.LabelFrame(right, text="Mode")
         mode_frame.pack(fill="x", pady=5)
-        for text, val in [("Insert", "insert"), ("Move", "move")]:
+        for text, val in [("Insert TP", "insert"), ("Insert HG", "insertHG"), ("Insert Photo", "insertPhoto"), ("Move", "move")]:
             tk.Radiobutton(mode_frame, text=text, value=val, variable=self.mode_var).pack(anchor="w")
 
         # Map
@@ -111,7 +111,17 @@ class MapPointEditorApp(tk.Toplevel):
         tk.Label(bottom, textvariable=self.status_var, anchor="w", bg="#e6e6e6").pack(side="right", fill="x", expand=True)
 
     def _insert_point(self, lat, lon):
-        self.manager.create_point(lat, lon)
+        mode = self.mode_var.get()
+
+        if mode == "insertHG":
+            self.manager.create_hg_point(lat, lon)
+
+        elif mode == "insertPhoto":
+            self.manager.create_photo_point(lat, lon)
+
+        else:
+            self.manager.create_point(lat, lon)
+
         self._set_status("Point added")
 
     def _move_point_from_map(self, point_id, lat, lon):
@@ -207,7 +217,9 @@ Overview
 This tool lets you create, edit and manage task points on an OpenStreetMap background.
 Points are saved as TaskPoints<taskno>.csv files in DataDir/imports for later importing.
 Basic usage:
-• Insert mode: click on map to add a point (SP first, then TP1, TP2...)
+• Insert TP mode: click on map to add a point (SP first, then TP1, TP2...)
+• Insert HG mode: click on map to add a point (HG1, HG2...)
+• Insert Photo mode: click on map to add a point (PhotoA, PhotoB ...)
 • Move mode: select point from the list on the right, then click new location on map
 • Edit: Point Editor → change name/lat/lon/dist/PT in editor → Apply
 • Delete: select a point → Delete selected button
@@ -251,11 +263,11 @@ def run(DataDir=None, parent=None):
         root = parent
     elif tk._default_root is not None:
         root = tk._default_root
-        print("taskCreator: Reusing existing Tk root (from caller)")
+        #print("taskCreator: Reusing existing Tk root (from caller)")
     else:
         root = tk.Tk()
         root.withdraw()
-        print("taskCreator: Created new hidden Tk root (standalone)")
+        #print("taskCreator: Created new hidden Tk root (standalone)")
 
     app = MapPointEditorApp(parent=root)
     if DataDir and os.path.isdir(DataDir):

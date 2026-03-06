@@ -51,8 +51,8 @@ class MegaScoreApp(tk.Tk):
 
         # create tabs
         self.admin_tab = self.create_tab("Admin")
-        self.task_tab = self.create_tab("Task Importer")
-        self.scorer_tab = self.create_tab("Scorer")
+        self.task_tab = self.create_tab("Task Manager")
+        self.scorer_tab = self.create_tab("Scoring")
         self.results_tab = self.create_tab("Results")
 
         # populate tabs
@@ -158,7 +158,8 @@ class MegaScoreApp(tk.Tk):
             "importFromKML",
             "importFromPesto",
             "importFromCSV",
-            "TaskPointsReview"
+            "TaskPointsReview",
+            "deleteTask"
         ]
         self.build_button_list(self.task_tab, options)
 

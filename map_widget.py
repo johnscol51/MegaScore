@@ -25,8 +25,7 @@ class MapWidget(tk.Frame):
     def _handle_map_click(self, coords):
         lat, lon = coords
         mode = self.get_mode()
-
-        if mode == "insert":
+        if mode in ("insert", "insertHG", "insertPhoto"):
             self.on_insert_click(lat, lon)
         elif mode == "move":
             pid = self.get_selected_point_id()

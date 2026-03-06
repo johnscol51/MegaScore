@@ -14,6 +14,7 @@ from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 from datetime import datetime
 from reportlab.pdfbase.pdfmetrics import stringWidth
+from utils import log
 
 FT = 3.28084
 
@@ -137,6 +138,7 @@ def parse_igc(path, debug=False):
             track.append((lat, lon, alt))
     if debug:
         print(f"Parsed {len(track)} B-records from IGC")
+        log(f"Parsed {len(track)} B-records from IGC")
     return track
 
 def clean_num(val):
@@ -550,6 +552,8 @@ def run(DataDir):
                 if debug_mode:
                     print(f"\n=== DEBUG: {pilot_name} - {igc_name} ===")
                     print(f"Total B-records: {len(track)}")
+                    log(f"=== DEBUG: {pilot_name} - {igc_name} ===")
+                    log(f"Total B-records: {len(track)}")
                 # 1. SP crossing
                 sp_index = None
                 for i, (lat, lon, alt) in enumerate(track):
@@ -557,12 +561,14 @@ def run(DataDir):
                         sp_index = i
                         if debug_mode:
                             print(f"[{pilot_name}] SP crossed at index {i}")
+                            log(f"[{pilot_name}] SP crossed at index {i}")
                         break
                 if sp_index is None:
                     update_status(" SP never crossed")
                     write_fail(writer, pilot_no, pilot_name, "SP never crossed")
                     if debug_mode:
                         print(f"[{pilot_name}] → SP never crossed")
+                        log(f"[{pilot_name}] → SP never crossed")
                     continue
                 # 2. CM crossing
                 cm_index = None
@@ -572,17 +578,20 @@ def run(DataDir):
                         cm_index = j
                         if debug_mode:
                             print(f"[{pilot_name}] CM crossed at index {j}")
+                            log(f"[{pilot_name}] CM crossed at index {j}")
                         break
                 if cm_index is None:
                     update_status(" CM never crossed")
                     write_fail(writer, pilot_no, pilot_name, "CM never crossed")
                     if debug_mode:
                         print(f"[{pilot_name}] → CM never crossed")
+                        log(f"[{pilot_name}] → CM never crossed")
                     continue
                 # 3. Detect start of left turn after CM
                 inbound_heading = track_heading(SP[0], SP[1], CM[0], CM[1])
                 if debug_mode:
                     print(f"[{pilot_name}] Inbound SP-CM heading: {inbound_heading:.1f}°")
+                    log(f"[{pilot_name}] Inbound SP-CM heading: {inbound_heading:.1f}°")
                 turn_start = None
                 cum_left = 0.0
                 last_h = None
@@ -600,6 +609,7 @@ def run(DataDir):
                             turned_left_of_inbound = True
                             if debug_mode:
                                 print(f"[{pilot_name}] Turned left of inbound axis at index {k} (heading {h:.1f}° < {inbound_heading:.1f}°)")
+                                log(f"[{pilot_name}] Turned left of inbound axis at index {k} (heading {h:.1f}° < {inbound_heading:.1f}°)")
                         last_h = h
                         continue
                     if d < 0:
@@ -608,6 +618,7 @@ def run(DataDir):
                         turn_start = k
                         if debug_mode:
                             print(f"[{pilot_name}] Left turn confirmed at index {k} (cum left: {cum_left:.2f}°)")
+                            log(f"[{pilot_name}] Left turn confirmed at index {k} (cum left: {cum_left:.2f}°)")
                         break
                     last_h = h
                 if turn_start is None:
@@ -615,6 +626,7 @@ def run(DataDir):
                     write_fail(writer, pilot_no, pilot_name, "No clear left turn after CM")
                     if debug_mode:
                         print(f"[{pilot_name}] → No clear left turn after CM")
+                        log(f"[{pilot_name}] → No clear left turn after CM")
                     continue
                 # 4. Find entry line cross — after delay and heading check
                 entry_start = turn_start + entry_delay_sec  # skip delay points (assume 1 Hz)
@@ -623,9 +635,11 @@ def run(DataDir):
                     write_fail(writer, pilot_no, pilot_name, "Entry delay exceeds track length")
                     if debug_mode:
                         print(f"[{pilot_name}] → Entry delay exceeds track length")
+                        log(f"[{pilot_name}] → Entry delay exceeds track length")
                     continue
                 if debug_mode:
                     print(f"[{pilot_name}] Entry search starts at index {entry_start} (after delay)")
+                    log(f"[{pilot_name}] Entry search starts at index {entry_start} (after delay)")
                 entry_index = None
                 for k in range(entry_start + 1, len(track)):
                     lat, lon, alt = track[k]
@@ -641,18 +655,22 @@ def run(DataDir):
                             entry_index = k
                             if debug_mode:
                                 print(f"[{pilot_name}] Potential entry at index {k}, heading {heading_at_cross:.1f}° - Accepted (within {expected_heading - entry_heading_tol:.1f}° to {expected_heading + entry_heading_tol:.1f}°)")
+                                log(f"[{pilot_name}] Potential entry at index {k}, heading {heading_at_cross:.1f}° - Accepted (within {expected_heading - entry_heading_tol:.1f}° to {expected_heading + entry_heading_tol:.1f}°)")
                             break
                         else:
                             if debug_mode:
                                 print(f"[{pilot_name}] Potential entry at index {k}, heading {heading_at_cross:.1f}° - Rejected (outside {expected_heading - entry_heading_tol:.1f}° to {expected_heading + entry_heading_tol:.1f}°)")
+                                log(f"[{pilot_name}] Potential entry at index {k}, heading {heading_at_cross:.1f}° - Rejected (outside {expected_heading - entry_heading_tol:.1f}° to {expected_heading + entry_heading_tol:.1f}°)")
                 if entry_index is None:
                     update_status(" No valid entry line crossed")
                     write_fail(writer, pilot_no, pilot_name, "No valid entry line crossed")
                     if debug_mode:
                         print(f"[{pilot_name}] → No valid entry line crossed")
+                        log(f"[{pilot_name}] → No valid entry line crossed")
                     continue
                 if debug_mode:
                     print(f"[{pilot_name}] Entry line crossed at index {entry_index}")
+                    log(f"[{pilot_name}] Entry line crossed at index {entry_index}")
                 # 5. Exit angle + line
                 bearing_entry = bearing_CM(CM, track[entry_index][0], track[entry_index][1])
                 reached_angle = False
@@ -665,23 +683,28 @@ def run(DataDir):
                         start_exit_search = k
                         if debug_mode:
                             print(f"[{pilot_name}] Reached {EXIT_ANGLE}° at index {k} (bearing diff: {d:.1f}°)")
+                            log(f"[{pilot_name}] Reached {EXIT_ANGLE}° at index {k} (bearing diff: {d:.1f}°)")
                         break
                 if not reached_angle:
                     update_status(f" Never reached {EXIT_ANGLE}° exit angle - scoring to end of track")
                     start_exit_search = len(track) - 1
                     if debug_mode:
                         print(f"[{pilot_name}] → Never reached {EXIT_ANGLE}° - using end of track")
+                        log(f"[{pilot_name}] → Never reached {EXIT_ANGLE}° - using end of track")
                 exit_index = find_line_cross(track, start_exit_search, SP, CM)
                 if exit_index is None:
                     update_status(" Exit line never crossed - scoring to end of track")
                     exit_index = len(track) - 1
                     if debug_mode:
                         print(f"[{pilot_name}] → Exit line never crossed - using end of track")
+                        log(f"[{pilot_name}] → Exit line never crossed - using end of track")
                 else:
                     if debug_mode:
                         print(f"[{pilot_name}] Exit line crossed at index {exit_index}")
+                        log(f"[{pilot_name}] Exit line crossed at index {exit_index}")
                 if debug_mode:
                     print(f"[{pilot_name}] Scored arc from index {entry_index} to {exit_index} ({exit_index - entry_index} points)")
+                    log(f"[{pilot_name}] Scored arc from index {entry_index} to {exit_index} ({exit_index - entry_index} points)")
 
                 # 7. Scoring
                 scoring = score_circle(track, CM, entry_index, exit_index)

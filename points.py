@@ -17,6 +17,8 @@ class PointManager:
         self.points = {}
         self.next_id = 1
         self.tp_counter = 1
+        self.hg_counter = 1
+        self.photo_counter = 1
 
         self.map_add = map_add
         self.map_move = map_move
@@ -41,6 +43,11 @@ class PointManager:
         self.next_id = 1
         self.tp_counter = 1
 
+    def _photo_letter(self, n):
+        # n = 1 → A, 2 → B, ... 26 → Z
+        return chr(ord('A') + n - 1)
+
+
     def add_loaded_point(self, point_id, name, lat, lon, dist, PT):
         try:
             pt_val = int(float(PT.strip())) if PT else 0   # float() handles old "0.0" etc.
@@ -55,6 +62,24 @@ class PointManager:
             tp_num = int(name[2:])
             if tp_num >= self.tp_counter:
                 self.tp_counter = tp_num + 1
+        if name.startswith("HG") and name[2:].isdigit():
+            hg_num = int(name[2:])
+            if hg_num >= self.hg_counter:
+                self.hg_counter = hg_num + 1
+
+        if name.startswith("Photo") and len(name) == 6:
+            letter = name[5]
+            if 'A' <= letter <= 'Z':
+                num = ord(letter) - ord('A') + 1
+                if num >= self.photo_counter:
+                   self.photo_counter = num + 1
+
+        if name.upper().startswith("PHOTO") and name[5:].isdigit():
+            ph_num = int(name[5:])
+            if ph_num >= self.photo_counter:
+                self.photo_counter = ph_num + 1
+
+
 
     def create_point(self, lat, lon):
         name = self._get_next_name()
@@ -64,6 +89,42 @@ class PointManager:
         self.next_id += 1
         if name.startswith("TP"):
             self.tp_counter += 1
+
+    def create_hg_point(self, lat, lon):
+        """Same as create_point but creates HG1, HG2, HG3..."""
+        name = self._get_next_hg_name()
+        self.points[self.next_id] = {"name": name, "lat": lat, "lon": lon, "dist": 0.0, "PT": 0}
+        self.map_add(self.next_id, lat, lon)
+        self.list_panel.refresh()
+        self.next_id += 1
+        if name.startswith("HG"):
+            self.hg_counter += 1
+
+    def create_photo_point(self, lat, lon):
+        """Creates PhotoA, PhotoB, PhotoC..."""
+        name = self._get_next_photo_name()
+        self.points[self.next_id] = {
+            "name": name,
+            "lat": lat,
+            "lon": lon,
+            "dist": 0.0,
+            "PT": 0
+        }
+        self.map_add(self.next_id, lat, lon)
+        self.list_panel.refresh()
+        self.next_id += 1
+        self.photo_counter += 1
+
+
+    def _get_next_hg_name(self):
+        if self.hg_counter == 1:
+            return "HG1"
+        else:
+            return f"HG{self.hg_counter}"
+
+    def _get_next_photo_name(self):
+        letter = self._photo_letter(self.photo_counter)
+        return f"Photo{letter}"
 
     def _get_next_name(self):
         if not self.points:
