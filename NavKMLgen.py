@@ -356,7 +356,7 @@ def run(DataDir):
     # Buttons
     btn_frame = ttk.Frame(main_frame)
     btn_frame.grid(row=5, column=0, columnspan=2, pady=10, sticky="e")
-    tk.Button(btn_frame, text="OK", width=10, bg="#0066cc", fg="white", command=confirm).pack(side="left", padx=10)
+    tk.Button(btn_frame, text="OK", width=10, fg="blue", command=confirm).pack(side="left", padx=10)
     ttk.Button(btn_frame, text="Cancel", width=10, command=cancel).pack(side="left", padx=6)
 
     dlg.protocol("WM_DELETE_WINDOW", cancel)

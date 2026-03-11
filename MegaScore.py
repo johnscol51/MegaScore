@@ -20,13 +20,33 @@ def app_dir():
         # Running from source
         return os.path.dirname(os.path.abspath(__file__))
 
+def resource_path(filename):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, filename)
+    return os.path.join(os.path.abspath("."), filename)
+
+def set_app_icon(window):
+    if sys.platform.startswith("win"):
+        # Windows: use crisp .ico
+        try:
+            window.iconbitmap(resource_path("gob.ico"))
+        except Exception as e:
+            print(f"Failed to set .ico icon: {e}")
+    else:
+        # Linux/macOS/ChromeOS: use PNG
+        try:
+            icon = tk.PhotoImage(file=resource_path("gob.png"))
+            window.iconphoto(True, icon)
+        except Exception as e:
+            print(f"Failed to set PNG icon: {e}")
 
 
 class MegaScoreApp(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.DataDir = None # <— THIS is the correct place
+        set_app_icon(self)
+        self.DataDir = None
 
         self.title("MegaScore")
         self.geometry("1000x650")   # Larger default window
@@ -40,7 +60,7 @@ class MegaScoreApp(tk.Tk):
         # ---------------------------------------------------------
         # Exit button (top-right)
         # ---------------------------------------------------------
-        exit_btn = tk.Button(self, text="Exit", command=self.quit, bg="#cc0000", fg="white")
+        exit_btn = tk.Button(self, text="Exit", command=self.quit, fg="red")
         exit_btn.pack(side="top", anchor="ne", padx=10, pady=5)
 
         # ---------------------------------------------------------

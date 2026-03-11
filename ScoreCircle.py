@@ -744,8 +744,7 @@ def run(DataDir):
         button_frame,
         text="Score Task",
         width=12,
-        bg="#0066cc",
-        fg="white",
+        fg="blue",
         command=do_score
     ).pack(side="left", padx=10)
     tk.Button(

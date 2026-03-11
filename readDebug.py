@@ -79,11 +79,8 @@ def run(DataDir=None):
     # Initial load
     load_logs()
 
-    # Blue Close button at very bottom
-    style = ttk.Style()
-    style.configure("Blue.TButton", background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"))
 
-    ttk.Button(dlg, text="Close", width=10, command=dlg.destroy,
-               style="Blue.TButton").pack(pady=10)
+    tk.Button(dlg, text="Close", width=10, foreground="blue", command=dlg.destroy
+               ).pack(pady=10)
 
     dlg.protocol("WM_DELETE_WINDOW", dlg.destroy)

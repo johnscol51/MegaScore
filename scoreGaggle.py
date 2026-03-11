@@ -226,6 +226,7 @@ def run(DataDir):
             c.drawString(300, y, score)
             c.drawString(440, y, notes)
             y -= row_step
+
             if y < 60:
                 c.showPage()
                 y = height - 40
@@ -238,6 +239,14 @@ def run(DataDir):
                 c.drawString(40, y, f"{comp.get('name', 'Competition')} — Gaggle Task (cont.)")
                 y -= 30
                 c.setFont("Helvetica", 9)
+
+        
+        # Footer on last page
+        footer_text = f"Generated: {datetime.now().isoformat(timespec='seconds')} File: {os.path.basename(pdf_path)}"
+        c.setFont("Helvetica", 8)
+        c.drawString(40, 20, "MegaScore Goblin")
+        c.drawRightString(width - 40, 20, footer_text)
+
         c.save()
 
         messagebox.showinfo("Saved", f"Gaggle scoring saved to:\n{csv_path}")
@@ -249,7 +258,7 @@ def run(DataDir):
     # -----------------------------------------------------
     btn_frame = tk.Frame(root)
     btn_frame.pack(pady=10)
-    tk.Button(btn_frame, text="OK", width=12, bg="#0066cc", fg="white", command=save_csv).pack(side="left", padx=10)
+    tk.Button(btn_frame, text="OK", width=12, fg="blue", command=save_csv).pack(side="left", padx=10)
     tk.Button(btn_frame, text="Cancel", width=12, command=lambda: (root.grab_release(), root.destroy())).pack(side="left", padx=10)
 
     root.wait_window()

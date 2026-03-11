@@ -107,8 +107,8 @@ def run(DataDir):
     btn_frame = ttk.Frame(frame)
     btn_frame.grid(row=3, column=0, columnspan=2, pady=20, sticky="ew")
     
-    # OK button blue
-    tk.Button(btn_frame, text="OK", width=10,  background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"),command=confirm).pack(side="left", padx=10)
+
+    tk.Button(btn_frame, text="OK", width=10,  foreground="blue", font=("Helvetica", 10, "bold"),command=confirm).pack(side="left", padx=10)
     
     ttk.Button(btn_frame, text="close", width=10, command=cancel).pack(side="left", padx=10)
 

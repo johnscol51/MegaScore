@@ -51,7 +51,7 @@ def run(DataDir):
     # ---------------------------------------------------------
     dlg = tk.Toplevel()
     dlg.title("Competition Details")
-    dlg.geometry("860x420")  # Wider and tall enough for all fields
+    dlg.geometry("920x420")  # Wider and tall enough for all fields
     dlg.transient(tk._default_root)
     dlg.grab_set()
     dlg.focus_set()
@@ -121,11 +121,7 @@ def run(DataDir):
     btn_frame = tk.Frame(frame)
     btn_frame.grid(row=10, column=0, columnspan=2, pady=20, sticky="ew")
 
-    # Blue OK button style
-    style = ttk.Style()
-    style.configure("Blue.TButton", background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"))
-
-    tk.Button(btn_frame, text="OK", width=10,background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"), command=lambda: dlg.destroy()).pack(side="left", padx=10)
+    tk.Button(btn_frame, text="OK", width=10, foreground="blue", font=("Helvetica", 10, "bold"), command=lambda: dlg.destroy()).pack(side="left", padx=10)
 #    ttk.Button(btn_frame, text="OK", width=10, command=lambda: dlg.destroy(),
 #               style="Blue.TButton").pack(side="left", padx=10)
 

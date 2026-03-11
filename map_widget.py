@@ -19,6 +19,10 @@ class MapWidget(tk.Frame):
         self.map.pack(fill="both", expand=True)
         self.map.set_position(54.5, -2.5)
         self.map.set_zoom(8)
+        self.map.canvas.itemconfig(self.map.button_zoom_in.canvas_rect, state='hidden') 
+        self.map.canvas.itemconfig(self.map.button_zoom_in.canvas_text, state='hidden') 
+        self.map.canvas.itemconfig(self.map.button_zoom_out.canvas_rect, state='hidden') 
+        self.map.canvas.itemconfig(self.map.button_zoom_out.canvas_text, state='hidden')
 
         self.map.add_left_click_map_command(self._handle_map_click)
 
@@ -60,7 +64,7 @@ class MapWidget(tk.Frame):
         if self.selected_circle:
             self.selected_circle.delete()
         pts = self._circle_points(lat, lon, 250)
-        self.selected_circle = self.map.set_polygon(pts, outline_color="blue", border_width=2)
+        self.selected_circle = self.map.set_polygon(pts, outline_color="blue", fill_color="", border_width=2)
 
     def delete_point(self, point_id):
         if point_id in self.markers:

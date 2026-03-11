@@ -746,7 +746,8 @@ def run(DataDir):
             # Footer on plot page
             footer_text = f"Generated: {datetime.now().isoformat(timespec='seconds')}   File: {os.path.basename(pdf_path)}"
             c.setFont("Helvetica", 8)
-            c.drawString(40, 20, footer_text)
+            c.drawString(40, 20, "MegaScore Goblin")
+            c.drawRightString(width - 40, 20, footer_text)
 
             if plotyn_var.get() == "Y":
                 c.showPage()
@@ -778,8 +779,7 @@ def run(DataDir):
         button_frame,
         text="OK",
         width=12,
-        bg="#0066cc",
-        fg="white",
+        fg="blue",
         command=do_score,
     )
     ok_btn.pack(side="left", padx=10)

@@ -96,6 +96,7 @@ def run(DataDir):
         backup_path = tp_path.replace(".csv", "-old.csv")
         shutil.copy(tp_path, backup_path)
         log(f"Backup created: {backup_path}")
+        log(f"Deleting task: {task_to_delete} from master TaskPoints.csv")
 
         # Load all rows
         all_rows = []
@@ -172,7 +173,7 @@ def run(DataDir):
     # Buttons
     btn_frame = tk.Frame(root)
     btn_frame.pack(pady=5)
-    tk.Button(btn_frame, text="Refresh List", width=12, bg="#0066cc", fg="white", command=process).pack(side="left", padx=10)
+    tk.Button(btn_frame, text="Refresh List", width=12, fg="blue", command=process).pack(side="left", padx=10)
     tk.Button(btn_frame, text="Close", width=12, command=lambda: (root.grab_release(), root.destroy())).pack(side="left", padx=10)
 
     root.wait_window()

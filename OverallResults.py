@@ -313,8 +313,7 @@ def run(DataDir):
         btn_frame,
         text="OK",
         width=12,
-        bg="#0066cc",
-        fg="white",
+        fg="blue",
         command=process_results,
     ).pack(side="left", padx=10)
 

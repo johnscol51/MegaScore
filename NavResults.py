@@ -333,7 +333,9 @@ def run(DataDir):
                 # Footer before page break
                 footer_text = f"Generated: {datetime.now().isoformat(timespec='seconds')}    File: {os.path.basename(pdf_path)}"
                 c.setFont("Helvetica", 8)
-                c.drawString(40, 20, footer_text)
+                c.drawString(40, 20, "MegaScore Goblin")
+                #c.drawString(width - 40, 20, footer_text)
+                c.drawRightString(width - 40, 20, footer_text)
 
                 c.showPage()
                 y = height - 40
@@ -392,7 +394,9 @@ def run(DataDir):
         # Final page footer
         footer_text = f"Generated: {datetime.now().isoformat(timespec='seconds')}    File: {os.path.basename(pdf_path)}"
         c.setFont("Helvetica", 8)
-        c.drawString(40, 20, footer_text)
+        #c.drawString(40, 20, footer_text)
+        c.drawString(40, 20, "MegaScore Goblin")
+        c.drawRightString(width - 40, 20, footer_text)
 
         c.save()
 
@@ -407,8 +411,7 @@ def run(DataDir):
         btn_frame,
         text="OK",
         width=12,
-        bg="#0066cc",
-        fg="white",
+        fg="blue",
         command=save_results,
     ).pack(side="left", padx=10)
 

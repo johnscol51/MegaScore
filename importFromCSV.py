@@ -57,7 +57,7 @@ def run(DataDir):
             selected_file.set(f)
         dlg.after(50, dlg.focus_force)
 
-    ttk.Button(frame, text="Browse", command=choose_file).grid(row=0, column=1, padx=10, pady=8, sticky="w")
+    ttk.Button(frame, text="Browse", command=choose_file).grid(row=0, column=0, padx=9, pady=8, sticky="e")
 
     # File path label expands horizontally
     ttk.Label(frame, textvariable=selected_file, width=80, wraplength=650).grid(
@@ -69,7 +69,7 @@ def run(DataDir):
     )
     ttk.Combobox(
         frame, textvariable=import_task_num, values=list(range(1, 11)), width=5
-    ).grid(row=2, column=1, sticky="w", pady=8)
+    ).grid(row=2, column=0, sticky="e", pady=8)
 
     # Advanced section (right side) - fixed width, vertical fill
     adv_frame = tk.LabelFrame(dlg, text="Advanced — do not change unless required", padx=15, pady=15)
@@ -99,13 +99,7 @@ def run(DataDir):
     btn_frame = ttk.Frame(frame)
     btn_frame.grid(row=3, column=0, columnspan=2, pady=20, sticky="ew")
 
-    # Blue OK button
-    style = ttk.Style()
-    style.configure("Blue.TButton", background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"))
-
-    #ttk.Button(btn_frame, text="OK", width=10, command=confirm,
-    #           style="Blue.TButton").pack(side="left", padx=10)
-    tk.Button(btn_frame, text="OK", width=10,  background="#0066cc", foreground="white", font=("Helvetica", 10, "bold"),command=confirm).pack(side="left", padx=10)
+    tk.Button(btn_frame, text="OK", width=10,  foreground="blue", font=("Helvetica", 10, "bold"),command=confirm).pack(side="left", padx=10)
 
     ttk.Button(btn_frame, text="Close", width=10, command=cancel).pack(side="left", padx=10)
     parent.wait_window(dlg)
